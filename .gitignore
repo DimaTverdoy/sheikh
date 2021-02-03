@@ -1,0 +1,7 @@
+venv/
+.idea/
+*/__pycache__/
+django_sheikh/db.sqlite3
+django_sheikh/*/__pycache__/
+django_sheikh/*/migrations/0*
+django_sheikh/*/migrations/__pycache__/
