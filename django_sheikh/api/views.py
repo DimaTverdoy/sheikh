@@ -5,7 +5,7 @@ from rest_framework.views import APIView
 import json
 
 from .models import Company, Site, Keyword
-from .serializers import SiteSerializer
+from .serializers import SiteSerializer, SiteElasticsearchSerializer
 
 
 def add_site(requests):
@@ -59,5 +59,16 @@ class SiteView(APIView):
         data['keyword'] = []
         for key in sites.keyword_set.all():
             data['keyword'].append(key.key)
-        data['conf'] = {'type': 'site'}
+        return Response({"site": data})
+
+
+class SiteElasticsearchView(APIView):
+    def get(self, request, id_site):
+        sites = Site.objects.get(id=id_site)
+        serializer = SiteElasticsearchSerializer(sites)
+
+        data = serializer.data
+        data['keyword'] = []
+        for key in sites.keyword_set.all():
+            data['keyword'].append(key.key)
         return Response({"site": data})

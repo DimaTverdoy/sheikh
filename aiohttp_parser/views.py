@@ -1,6 +1,7 @@
 import json
 
 import aiohttp
+import elasticsearch
 from aiohttp import web
 from elasticsearch import Elasticsearch
 
@@ -30,9 +31,21 @@ async def parser_site(request):
             async with session.get('http://localhost:8000/api/add-site',
                                    json=parser.result) as _:    # Data additions to django
                 json_response = json.loads(await _.text())
-                async with session.get(f'http://localhost:8000/api/site-detail/'    # Get data
+                async with session.get(f'http://localhost:8000/api/site-detail-elastic/'    # Get data
                                        f'{json_response["site_id"]}?format=json') as site_response:
+                    text = await site_response.text()
+                    print(f'http://localhost:8000/api/api/site-detail-elastic/'    # Get data
+                                       f'{json_response["site_id"]}?format=json')
                     json_site = json.loads(await site_response.text())
-                    es.index(index="site", id=json_site['site']['id'],
-                             body=json_site) # Data additions to elasticsearch
+                    try:
+                        es.index(index="site", id=json_site['site']['id'],
+                                body=json_site) # Data additions to elasticsearch
+                    except elasticsearch.exceptions.ConflictError:
+                        try:
+                            es.update(index="site", id=json_site['site']['id'],
+                                     body=json_site)  # Data update to elasticsearch
+                        except elasticsearch.exceptions.RequestError:
+                            es.delete(index="site", id=json_site['site']['id'])
+                            es.index(index="site", id=json_site['site']['id'],
+                                     body=json_site)  # Data additions to elasticsearch
                 return web.json_response(data={'ok': 'add data'})

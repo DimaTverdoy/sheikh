@@ -1,6 +1,8 @@
 from django.db import models
 from django.utils import timezone
 
+from .serializers import ConfigureSerializer
+
 
 class Company(models.Model):
     name = models.CharField(max_length=100, verbose_name='Название компании')
@@ -39,6 +41,27 @@ class Site(models.Model):
     company = models.ForeignKey(Company, on_delete=models.CASCADE, verbose_name='Компиния')
 
     request = models.IntegerField(default=0, verbose_name='Запросы')
+
+    def get_title(self):
+        return self.og_title if self.og_title else self.title
+
+    def get_description(self):
+        return self.og_description if self.og_description else self.description
+
+    def get_image(self):
+        return self.og_image
+
+    def get_date(self):
+        return self.date
+
+    def get_keyword(self):
+        return [key for key in self.keyword_set.all()]
+
+    def get_configure(self):
+        conf = ConfigureSerializer()
+        conf.type = 'site'
+        return conf
+
 
     def __str__(self):
         return f'Site(id={self.id})'

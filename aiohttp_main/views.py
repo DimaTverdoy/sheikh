@@ -1,5 +1,3 @@
-from pprint import pprint
-
 import aiohttp
 import aiohttp_jinja2
 import wikipya
@@ -22,8 +20,11 @@ async def search_sites(request):
     if 'search' in request.rel_url.query:   # Parameter check search
         if not request.rel_url.query['search']:
             return web.json_response({'Error': 'not found search param'})
-
-    search = es.search(body={"query": {"query_string": {"query": request.rel_url.query['search']}}}, index='site')
+    search = es.search(body={"query": {"multi_match":
+                                      {"query": request.rel_url.query['search'],
+                                       "fields": ['*'],
+                                       "fuzziness": "auto",
+                                       "operator": "and",}}}, index='site')
     return web.json_response(search['hits']['hits'])
 
 
@@ -93,6 +94,5 @@ async def add_site(request):
     data = await request.post()
     if 'site' in data:
         async with aiohttp.ClientSession() as session:
-            async with session.post(f'http://127.0.0.1:9000/add-site', json={'url': data['site']}) as response:
-                await response.text()
+            await session.post(f'http://127.0.0.1:9000/add-site', json={'url': data['site']})
     return aiohttp_jinja2.render_template('search.html', request, {})
